@@ -101,6 +101,26 @@ dfo$std.WGT[is.na(dfo$std.WGT)] <- 0
 dfo1 <- dfo %>% group_by(year_group, LATITUDE, LONGITUDE) %>% dplyr::summarise(mean=geometric.mean(std.WGT))
 dfo1$SURVEY <- "DFO SPRING"
 
+map1<-
+  ggplot () +
+  #coord_cartesian() +
+  geom_tile(data=dfo1,aes(x=LONGITUDE, y=LATITUDE, fill=mean)) +
+  scale_fill_viridis(begin=0.5, option="turbo", name="Mean kg/tow") +
+  geom_polygon (data = SSstrat14.df2, aes (x = long2, y = lat2, group = group), colour = "black", fill = NA, size = 0.4) +
+  geom_polygon (data = NAFO.df2, aes (x = long2, y = lat2, group = group), colour = "black", fill = NA, size = 0.4) +
+  geom_path (data = Border.df2, aes (x = long2, y = lat2), colour = "black", linetype = "dashed", linewidth = 0.8) +
+  coord_map () + 
+  theme_bw () + 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + 
+  scale_y_continuous ("Latitude", expand = c (0,0), limits = c (40, 43)) + 
+  scale_x_continuous ( "Longitude", expand = c (0,0), limits = c (-71, -65)) +
+  theme (axis.title = element_text (size = 9), 
+         axis.text = element_text (size = 8), 
+         legend.text = element_text (size = 8), 
+         legend.title = element_text (size = 9)) +
+  facet_grid(year_group~SURVEY)
+map1
+
 
 
 #NMFS SPRING DISTRIBUTION PIXELATED---------------------------
@@ -111,7 +131,6 @@ nmfs <- dbGetQuery(channel, "select a.cruise6 mission, a.est_year year, a.statio
                      and b.season in ('SPRING')
                      and b.purpose_code in ('10')
                      and a.est_year between ('1970') and ('2023')
-                     and a.statype in ('1')
                      and a.shg < ('137')
                      and a.cruise6=b.cruise6
                      and a.cruise6=c.cruise6
@@ -120,8 +139,6 @@ nmfs <- dbGetQuery(channel, "select a.cruise6 mission, a.est_year year, a.statio
                      and a.station=d.station
                      and a.station=c.station
                      and a.stratum in ('01130', '01140', '01150', '01160', '01170', '01180', '01190', '01200', '01210')")
-
-save(nmfs,file="nmfsspr.Rda")
 
 #Pre-2009 has no ASW value and we just use the raw data without standardization
 
@@ -140,12 +157,9 @@ sets <- dbGetQuery(channel, "select a.cruise6 mission, a.est_year year, a.statio
                      where b.season in ('SPRING')
                      and b.purpose_code in ('10')
                      and a.est_year between ('1970') and ('2023')
-                     and a.statype in ('1')
                      and a.shg < ('137')
                      and a.cruise6=b.cruise6
                      and a.stratum in ('01130', '01140', '01150', '01160', '01170', '01180', '01190', '01200', '01210')")
-
-save(sets,file="nmfssets.Rda")
 
 sets$YEAR <- as.numeric(sets$YEAR)
 
@@ -167,7 +181,7 @@ nmfs$LONGITUDE <- round(nmfs$LONGITUDE, digits=1)
 nmfs <- nmfs %>% dplyr::select(year_group, LATITUDE, LONGITUDE, TOTWGT)
 nmfs$TOTWGT[is.na(nmfs$TOTWGT)] <- 0
 
-nmfs2 <- test %>% group_by(year_group, LATITUDE, LONGITUDE) %>% dplyr::summarise(mean=geometric.mean(TOTWGT))
+nmfs2 <- nmfs %>% group_by(year_group, LATITUDE, LONGITUDE) %>% dplyr::summarise(mean=geometric.mean(TOTWGT))
 nmfs2$SURVEY <- "NMFS SPRING"
 
 map2<-
@@ -198,7 +212,6 @@ nmfs <- dbGetQuery(channel, "select a.cruise6 mission, a.est_year year, a.statio
                      and b.season in ('FALL')
                      and b.purpose_code in ('10')
                      and a.est_year between ('1970') and ('2023')
-                     and a.statype in ('1')
                      and a.shg < ('137')
                      and a.cruise6=b.cruise6
                      and a.cruise6=c.cruise6
@@ -227,7 +240,6 @@ sets <- dbGetQuery(channel, "select a.cruise6 mission, a.est_year year, a.statio
                      where b.season in ('FALL')
                      and b.purpose_code in ('10')
                      and a.est_year between ('1970') and ('2023')
-                     and a.statype in ('1')
                      and a.shg < ('137')
                      and a.cruise6=b.cruise6
                      and a.stratum in ('01130', '01140', '01150', '01160', '01170', '01180', '01190', '01200', '01210')")

@@ -10,6 +10,7 @@ library(tidyr)
 library(dplyr)
 library(lubridate)
 library(here)
+library(ggpubr)
 
 channel <- ROracle::dbConnect(DBI::dbDriver("Oracle"), username=oracle.username, password=oracle.password, oracle.dsn) 
 
@@ -95,7 +96,6 @@ dates <- dbGetQuery(channel, "select a.cruise6, a.est_year, a.est_month, a.begin
                      where b.season in ('SPRING')
                      and b.purpose_code in ('10')
                      and a.est_year between ('1970') and ('2023')
-                     and a.statype in ('1')
                      and a.shg < ('137')
                      and a.cruise6=b.cruise6
                      and a.area in ('522', '525', '561', '562', '551', '552')")
@@ -128,10 +128,10 @@ plot2 <- ggplot() +
   theme_bw() +
   xlab("Survey Year")+
   ylab("Day of the Year") +
-  annotate("text", x=45, y=78, label = "March") +
-  annotate("text", x=45, y=110, label = "April") +
-  annotate("text", x=45, y=140, label = "May") +
-  annotate("text", x=46, y=110, label = " ") +
+  annotate("text", x=54, y=78, label = "March") +
+  annotate("text", x=54, y=110, label = "April") +
+  annotate("text", x=54, y=140, label = "May") +
+  annotate("text", x=56, y=110, label = " ") +
   ggtitle("NMFS Spring Survey") +
   scale_colour_manual(values = c("#FFF700"))
 plot2
@@ -145,7 +145,6 @@ dates <- dbGetQuery(channel, "select a.cruise6, a.est_year, a.est_month, a.begin
                      where b.season in ('FALL')
                      and b.purpose_code in ('10')
                      and a.est_year between ('1970') and ('2023')
-                     and a.statype in ('1')
                      and a.shg < ('137')
                      and a.cruise6=b.cruise6
                      and a.area in ('522', '525', '561', '562', '551', '552')")
@@ -178,15 +177,14 @@ plot3 <- ggplot() +
   theme_bw() +
   xlab("Survey Year")+
   ylab("Day of the Year") +
-  annotate("text", x=45, y=267, label = "Sept.") +
-  annotate("text", x=45, y=290, label = "Oct.") +
-  annotate("text", x=45, y=315, label = "Nov.") +
-  annotate("text", x=46, y=310, label = " ") +
+  annotate("text", x=54, y=267, label = "Sept.") +
+  annotate("text", x=54, y=290, label = "Oct.") +
+  annotate("text", x=54, y=330, label = "Nov.") +
+  annotate("text", x=56, y=310, label = " ") +
   ggtitle("NMFS Fall Survey") +
   scale_colour_manual(values = c("#FFF700"))
 plot3
 
-library(ggpubr)
 ggarrange(plot1, plot2, plot3, ncol=3, nrow=1, common.legend=TRUE, legend="bottom")
 
 ggsave(here("figures/Survey_Timing.png"), width=11, height=8.5, units="in")

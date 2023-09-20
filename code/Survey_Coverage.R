@@ -10,6 +10,7 @@ library(tidyr)
 library(dplyr)
 library(lubridate)
 library(here)
+library(ggpubr)
 
 channel <- ROracle::dbConnect(DBI::dbDriver("Oracle"), username=oracle.username, password=oracle.password, oracle.dsn) 
 
@@ -32,6 +33,7 @@ data2 <- dbGetQuery(channel, "select a.year, b.strat, b.setno from
                     and a.mission=b.mission")
 
 data <- rbind(data, data2)
+rm(data2)
 
 summary <- data %>% group_by(YEAR, STRAT) %>% tally()
 names(summary)[names(summary) == 'n'] <- 'SETS'
@@ -67,12 +69,11 @@ plot1
 
 #NMFS Spring Survey------------------------
 
-data <- dbGetQuery(channel, "select a.cruise6, a.est_year, a.stratum, a.tow from
+data <- dbGetQuery(channel, "select a.cruise6, a.est_year, a.stratum, a.tow, a.statype from
                      usnefsc.uss_station a, usnefsc.uss_mstr_cruise b
                      where b.season in ('SPRING')
                      and b.purpose_code in ('10')
                      and a.est_year between ('1970') and ('2023')
-                     and a.statype in ('1')
                      and a.shg < ('137')
                      and a.cruise6=b.cruise6
                      and a.stratum in ('01130', '01140', '01150', '01160', '01170', '01180', '01190', '01200', '01210')")
@@ -121,7 +122,6 @@ data <- dbGetQuery(channel, "select a.cruise6, a.est_year, a.stratum, a.tow from
                      where b.season in ('FALL')
                      and b.purpose_code in ('10')
                      and a.est_year between ('1970') and ('2023')
-                     and a.statype in ('1')
                      and a.shg < ('137')
                      and a.cruise6=b.cruise6
                      and a.stratum in ('01130', '01140', '01150', '01160', '01170', '01180', '01190', '01200', '01210')")
@@ -163,7 +163,6 @@ plot3
 
 #ggsave(here("figures/Survey_NMFSSpring_SetsperStrata.png"), height=5, width=10, units="in")
 
-library(ggpubr)
 ggarrange(plot1, plot2, plot3, ncol=1, nrow=3, common.legend=TRUE, legend="bottom")
 
 ggsave(here("figures/Survey_Coverage.png"), width=8.5, height=11, units="in")
@@ -175,7 +174,6 @@ data1 <- dbGetQuery(channel, "select a.cruise6, a.est_year, a.stratum, a.tow, b.
                      where b.season in ('SPRING')
                      and b.purpose_code in ('10')
                      and a.est_year between ('1970') and ('2023')
-                     and a.statype in ('1')
                      and a.shg < ('137')
                      and a.cruise6=b.cruise6
                      and a.stratum in ('01130', '01140', '01150', '01160', '01170', '01180', '01190', '01200', '01210')")
@@ -185,7 +183,6 @@ data2 <- dbGetQuery(channel, "select a.cruise6, a.est_year, a.stratum, a.tow, b.
                      where b.season in ('FALL')
                      and b.purpose_code in ('10')
                      and a.est_year between ('1970') and ('2023')
-                     and a.statype in ('1')
                      and a.shg < ('137')
                      and a.cruise6=b.cruise6
                      and a.stratum in ('01130', '01140', '01150', '01160', '01170', '01180', '01190', '01200', '01210')")
@@ -203,3 +200,28 @@ summary$STRATUM <- as.factor(substr(summary$STRATUM, start = 2, stop = 5))
 nmfs_sets <- summary %>% pivot_wider(names_from = STRATUM, values_from = SETS)
 
 write.csv(nmfs_sets, here("data/nmfs_setnumbers.csv"))
+
+#Table of sets for DFO Spring Survey
+
+data <- dbGetQuery(channel, "select a.year, b.strat, b.setno from 
+                    groundfish.gsmissions a, groundfish.gsinf b
+                    where a.season in ('SPRING')
+                    and a.year between ('1986') and ('2023')
+                    and b.strat in ('5Z1', '5Z2', '5Z3', '5Z4', '5Z5', '5Z6', '5Z7', '5Z8', '5Z9')
+                    and b.type in ('1')
+                    and a.mission=b.mission")
+
+data2 <- dbGetQuery(channel, "select a.year, b.strat, b.setno from 
+                    groundfish.gsmissions a, groundfish.gsinf b
+                    where a.season in ('SPRING')
+                    and a.year in ('2022')
+                    and b.strat in ('5Z1', '5Z2', '5Z3', '5Z4', '5Z5', '5Z6', '5Z7', '5Z8', '5Z9')
+                    and b.type in ('5')
+                    and a.mission=b.mission")
+
+data <- rbind(data, data2)
+
+summary <- data %>% group_by(YEAR, STRAT) %>% tally()
+names(summary)[names(summary) == 'n'] <- 'SETS'
+
+summary %>% pivot_wider(YEAR, names_from=STRAT, values_from=SETS)
