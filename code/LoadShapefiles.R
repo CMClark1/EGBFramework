@@ -5,6 +5,8 @@
 # Author: Caira Clark
 #############################
 
+#Use this as part of the script you're working on to run this file 
+#source("S:/Science/Population Ecology/Georges Bank/Useful R-scripts/LoadShapefiles.R")
 
 library(rgdal)
 library(rgeos)
@@ -42,3 +44,19 @@ Border.df2$lat2 <- ifelse (Border.df2$lat > 48, 48, ifelse (Border.df2$lat < 40,
 Border.df2$long2 <- ifelse (Border.df2$long > -56, -56, ifelse (Border.df2$long < -69, -69, Border.df2$long))
 Border.df3 <- subset(Border.df2, Border.df2[ , 2] > 40.5) 
 Border.df3$long2 <- ifelse (Border.df3$long2 > -66.0, -66.146, Border.df3$long2)
+
+#Example of how to use these for a map
+#map1<-
+  #ggplot(data, aes(x=LON, y=LAT)) +
+  #geom_polygon (data = SSstrat14.df2, aes (x = long2, y = lat2, group = group), colour = "black", fill=NA, linewidth = 0.4) +
+  #geom_polygon (data = NAFO.df2, aes (x = long2, y = lat2, group = group), colour = "black", fill = NA, linewidth = 0.4) +
+  #geom_path (data = Border.df2, aes (x = long2, y = lat2), colour = "black", linetype = "dashed", linewidth = 0.8) +
+  #coord_map () + 
+  #theme_bw () + 
+  #theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + 
+  #scale_y_continuous ("Latitude", expand = c (0,0), limits = c (40, 48)) + 
+  #scale_x_continuous ( "Longitude", expand = c (0,0), limits = c (-69, -56)) +
+  #theme (axis.title = element_text (size = 9), 
+         #axis.text = element_text (size = 8), 
+         #legend.text = element_text (size = 8), 
+         #legend.title = element_text (size = 9))
