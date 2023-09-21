@@ -5,17 +5,7 @@
 # Author: Caira Clark
 #############################
 
-library(ROracle)
-library(ggplot2)
-library(viridis)
-library(rgdal)
-library(rgeos)
-library('maptools')
-library(dplyr)
-library(ggpubr)
-library(here)
-library(psych)
-
+library(ROracle);library(ggplot2);library(viridis);library(rgdal);library(rgeos);library('maptools');library(dplyr);library(ggpubr);library(here);library(psych)
 
 channel <- ROracle::dbConnect(DBI::dbDriver("Oracle"), username=oracle.username, password=oracle.password, oracle.dsn) 
 
@@ -67,8 +57,6 @@ dfo <- ROracle::dbGetQuery(channel, "
                              and b.mission=c.mission
                              and a.setno=b.setno")
 
-save(dfo,file="dfo.Rda")
-
 sets <- ROracle::dbGetQuery(channel, "
                              select a.MISSION, a.SETNO, b.YEAR, a.SLAT, a.SLONG
                              from groundfish.gsinf a, groundfish.gsmissions b
@@ -77,8 +65,6 @@ sets <- ROracle::dbGetQuery(channel, "
                              and b.year between ('1986') and ('2023')
                              and a.strat in ('5Z1', '5Z2', '5Z3', '5Z4', '5Z5', '5Z6', '5Z7', '5Z8', '5Z9')
                              and a.mission=b.mission")
-
-save(sets,file="dfosets.Rda")
 
 dfo <- left_join(sets, dfo) %>% mutate(
   year_group = dplyr::case_when(
@@ -106,8 +92,8 @@ map1<-
   #coord_cartesian() +
   geom_tile(data=dfo1,aes(x=LONGITUDE, y=LATITUDE, fill=mean)) +
   scale_fill_viridis(begin=0.5, option="turbo", name="Mean kg/tow") +
-  geom_polygon (data = SSstrat14.df2, aes (x = long2, y = lat2, group = group), colour = "black", fill = NA, size = 0.4) +
-  geom_polygon (data = NAFO.df2, aes (x = long2, y = lat2, group = group), colour = "black", fill = NA, size = 0.4) +
+  geom_polygon (data = SSstrat14.df2, aes (x = long2, y = lat2, group = group), colour = "black", fill = NA, linewidth = 0.4) +
+  geom_polygon (data = NAFO.df2, aes (x = long2, y = lat2, group = group), colour = "black", fill = NA, linewidth= 0.4) +
   geom_path (data = Border.df2, aes (x = long2, y = lat2), colour = "black", linetype = "dashed", linewidth = 0.8) +
   coord_map () + 
   theme_bw () + 
@@ -221,7 +207,6 @@ nmfs <- dbGetQuery(channel, "select a.cruise6 mission, a.est_year year, a.statio
                      and a.station=c.station
                      and a.stratum in ('01130', '01140', '01150', '01160', '01170', '01180', '01190', '01200', '01210')")
 
-save(nmfs,file="nmfsfal.Rda")
 
 #Pre-2009 has no ASW value and we just use the raw data without standardization
 
