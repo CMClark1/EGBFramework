@@ -82,3 +82,24 @@ ggplot(biomass_long) +
   facet_wrap(~FACET, scale="free_y")
 
 ggsave(here("figures/Survey_ScaledBiomassIndex.png"), width=10, height=5, units="in")
+
+
+#NMFS only
+
+nmfsonly <- biomass_long%>%
+  filter(grepl("NMFS", Survey)) %>% 
+  mutate(SEASON=case_when(grepl("Fall", Survey) ~ "FALL", grepl("Spring", Survey) ~ "SPRING"),
+         Survey=case_when(grepl("EGB", Survey) ~ paste(Survey, "Total Biomass (std)"), !grepl("EGB", Survey) ~ paste(Survey,"Mean kg/tow (std)")))
+         
+ggplot(nmfsonly) +
+  geom_line(aes(x=year, y=biomass, group=Survey, color=Survey)) +
+  geom_point(aes(x=year, y=biomass, group=Survey, colour = Survey),size=1) + 
+  theme_bw() +
+  xlab("Year") +
+  ylab("Scaled Biomass Index") +
+  scale_colour_viridis_d(option="turbo", end=0.8)+
+  facet_wrap(~SEASON, scale="free_y")
+
+ggsave(here("figures/Survey_ScaledBiomassIndex_NMFSonly.png"), width=10, height=5, units="in")
+
+
