@@ -2,7 +2,7 @@
 # 5Z Cod
 # Survey Biomass Index
 # July 1, 2021
-# Author: Caira Clark
+# Author: Caira Clark and Irene Andrushchenko
 #############################
 
 require(dplyr)
@@ -33,10 +33,10 @@ biomass1986 <-biomass %>%
 biomass1986[is.na(biomass1986)] <- 0
 
 biomass[is.na(biomass)] <- 0
-biomass$cnmfsfall_mean <- mean(biomass1986$cnmfsfall)
-biomass$cnmfsspr_mean <- mean(biomass1986$cnmfsspr)
-biomass$dfospregb_mean <- mean(biomass1986$dfospr.egb)
-biomass$dfosprgb_mean <- mean(biomass1986$dfospr.gb)
+biomass$cnmfsfall_mean <- mean(subset(biomass1986, year>1985&cnmfsfall>0)$cnmfsfall)
+biomass$cnmfsspr_mean <- mean(subset(biomass1986, year>1985&cnmfsspr>0)$cnmfsspr)
+biomass$dfospregb_mean <- mean(subset(biomass1986, year>1985&dfospr.egb>0)$dfospr.egb)
+biomass$dfosprgb_mean <- mean(subset(biomass1986, year>1985&dfospr.gb>0)$dfospr.gb)
 
 #These are the standard converted biomass calculations
 biomass$NMFSFall.EGB <- biomass$cnmfsfall/biomass$cnmfsfall_mean
@@ -55,9 +55,9 @@ biomass_long$FACET <- "Total Biomass (std)"
 
 biomass2 <- read.csv(here("data/nmfs_biomass.csv"))
 colnames(biomass2)[1] <- "INDEX"
-biomass2 <- biomass2 %>% filter(YEAR!=2020)
+#biomass2 <- biomass2 %>% filter(YEAR!=2020)
 
-means <- biomass2 %>% group_by(INDEX) %>% summarise(mean(INDEX_KG))
+means <- subset(biomass2, YEAR>1986&!is.na(INDEX_KG)) %>% group_by(INDEX) %>% summarise(mean(INDEX_KG))
 biomass2 <- left_join(biomass2, means)
 
 #These are the standard converted biomass calculations
@@ -71,6 +71,7 @@ biomass2$FACET <- "Mean Kg/Tow (std)"
 
 biomass_long <- rbind(biomass_long, biomass2)
 
+
 #Plot
 ggplot(biomass_long) +
   geom_line(aes(x=year, y=biomass, group=Survey, color=Survey)) +
@@ -83,6 +84,27 @@ ggplot(biomass_long) +
 
 ggsave(here("figures/Survey_ScaledBiomassIndex.png"), width=10, height=5, units="in")
 
+#Adding a variable for spatial coverage
+biomass_long$Area<-with(biomass_long, ifelse(grepl("EGB",Survey),'EGB','GB'))
+biomass_long$Entity<-with(biomass_long, ifelse(grepl("DFO",Survey),'DFO','NMFS'))
+biomass_long$Season<-with(biomass_long, ifelse(grepl("Spring",Survey),'Spring','Fall'))
+biomass_long$Season<-with(biomass_long, ifelse(grepl("DFO",Survey), 'Spring', Season))
+biomass_long$EntSea<-with(biomass_long, paste(Entity, Season, sep=""))
+
+#Plot
+ggplot(biomass_long) +
+  geom_line(aes(x=year, y=biomass, group=EntSea, color=EntSea)) +
+  geom_point(aes(x=year, y=biomass, group=EntSea, colour = EntSea),size=1) + 
+  theme_bw() +
+  xlab("Year") +
+  ylab("Scaled Biomass Index") +
+  scale_colour_viridis_d(option="turbo", end=0.8)+
+  facet_wrap(~Area, scale="free_y")+ylim(0,7)+
+  geom_smooth(aes(x=year, y=biomass, group=EntSea, colour = EntSea), se=FALSE, size=1.2)
+
+ggsave(here("figures/Survey_ScaledBiomassIndex_EGBvGB.png"), width=10, height=5, units="in")
+
+
 
 #NMFS only
 
@@ -91,15 +113,8 @@ nmfsonly <- biomass_long%>%
   mutate(SEASON=case_when(grepl("Fall", Survey) ~ "FALL", grepl("Spring", Survey) ~ "SPRING"),
          Survey=case_when(grepl("EGB", Survey) ~ paste(Survey, "Total Biomass (std)"), !grepl("EGB", Survey) ~ paste(Survey,"Mean kg/tow (std)")))
 
-#These are missing values
-nmfsgb2020<- data.frame (year  = c(2020, 2020),
-                  Survey = c("NMFSFall.GB Mean kg/tow (std)", "NMFSSpring.GB Mean kg/tow (std)"),
-                  biomass = c(NA, NA),
-                  FACET = c("Mean kg/tow (std)", "Mean kg/tow (std)"),
-                  SEASON = c("FALL", "SPRING"))
 
-nmfsonly <- rbind(nmfsonly, nmfsgb2020)
-         
+
 ggplot(nmfsonly) +
   geom_line(aes(x=year, y=biomass, group=Survey, color=Survey)) +
   geom_point(aes(x=year, y=biomass, group=Survey, colour = Survey),size=1) + 
