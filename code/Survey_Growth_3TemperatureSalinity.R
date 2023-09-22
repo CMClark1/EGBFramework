@@ -90,3 +90,5 @@ map1<-
          legend.title = element_text (size = 9)) +
   facet_grid(YEARS~SEASON)
 map1 
+
+ggsave(here("figures/Survey_Env_TemperatureMap.png"), width=10, height=20, units="in")
