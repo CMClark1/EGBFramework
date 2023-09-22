@@ -90,6 +90,15 @@ nmfsonly <- biomass_long%>%
   filter(grepl("NMFS", Survey)) %>% 
   mutate(SEASON=case_when(grepl("Fall", Survey) ~ "FALL", grepl("Spring", Survey) ~ "SPRING"),
          Survey=case_when(grepl("EGB", Survey) ~ paste(Survey, "Total Biomass (std)"), !grepl("EGB", Survey) ~ paste(Survey,"Mean kg/tow (std)")))
+
+#These are missing values
+nmfsgb2020<- data.frame (year  = c(2020, 2020),
+                  Survey = c("NMFSFall.GB Mean kg/tow (std)", "NMFSSpring.GB Mean kg/tow (std)"),
+                  biomass = c(NA, NA),
+                  FACET = c("Mean kg/tow (std)", "Mean kg/tow (std)"),
+                  SEASON = c("FALL", "SPRING"))
+
+nmfsonly <- rbind(nmfsonly, nmfsgb2020)
          
 ggplot(nmfsonly) +
   geom_line(aes(x=year, y=biomass, group=Survey, color=Survey)) +
