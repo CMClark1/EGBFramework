@@ -104,8 +104,6 @@ ggplot(biomass_long) +
 
 ggsave(here("figures/Survey_ScaledBiomassIndex_EGBvGB.png"), width=10, height=5, units="in")
 
-
-
 #NMFS only
 
 nmfsonly <- biomass_long%>%
@@ -126,4 +124,27 @@ ggplot(nmfsonly) +
 
 ggsave(here("figures/Survey_ScaledBiomassIndex_NMFSonly.png"), width=10, height=5, units="in")
 
+#Alternative calculation for NMFS EGB
 
+CAA_nmfsspr <- read.csv(here("data/Survey CAA/nmfsspr_survey_caa.csv"))
+CAA_nmfsspr$SURVEY <- "NMFS SPRING"
+CAA_nmfsfall <- read.csv(here("data/Survey CAA/nmfsfall_survey_caa.csv")) #this stranal file should have the conversion factor selected.
+CAA_nmfsfall$SURVEY <- "NMFS FALL"
+CAA <- rbind(CAA_nmfsspr, CAA_nmfsfall)
+CAA <- CAA %>% pivot_longer(!c(Year, SURVEY), names_to="AGE", values_to="CAA") %>% mutate(AGE=substr(AGE,2,3))
+
+WAA_nmfsspr <- read.csv(here("data/Survey CAA/nmfsspr_survey_waa.csv"))
+WAA_nmfsspr$SURVEY <- "NMFS SPRING"
+WAA_nmfsfall <- read.csv(here("data/Survey CAA/nmfsfall_survey_waa.csv"))
+WAA_nmfsfall$SURVEY <- "NMFS FALL"
+WAA <- rbind(WAA_nmfsspr, WAA_nmfsfall)
+WAA <- WAA %>% pivot_longer(!c(Year, SURVEY), names_to="AGE", values_to="WAA") %>% mutate(AGE=substr(AGE,2,3))
+
+combined <- full_join(CAA, WAA)
+combined$biomass <- combined$CAA*combined$WAA
+
+ready <- combined %>% distinct() %>% select(Year, SURVEY, AGE, biomass) %>% pivot_wider(c(Year,AGE), names_from=SURVEY, values_from=biomass)
+colnames(ready)[3] <- "NMFSSPRING"
+colnames(ready)[4] <- "NMFSFALL"
+
+write.csv(ready, here("data/NMFSEGB_Biomass_calculated.csv"))
