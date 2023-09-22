@@ -5,41 +5,12 @@
 # Author: Caira Clark
 #############################
 
-library(ROracle);library(ggplot2);library(viridis);library(rgdal);library(rgeos);library('maptools');library(dplyr);library(ggpubr);library(here);library(psych)
+library(ROracle);library(ggplot2);library(viridis);library(dplyr);library(ggpubr);library(here);library(psych)
+
+#Run the script that loads the shapefiles for maps
+source("S:/Science/Population Ecology/Georges Bank/Useful R-scripts/LoadShapefiles.R")
 
 channel <- ROracle::dbConnect(DBI::dbDriver("Oracle"), username=oracle.username, password=oracle.password, oracle.dsn) 
-
-#Import Strata and NAFO Boundaries
-
-#Importing shape files
-setwd("S:/Science/Population Ecology/Georges Bank/Useful R-scripts/Mapping Data")
-
-#File import
-# Strata boundaries for Figure 2 (strata outlines)
-input <- "MaritimesRegionEcosystemAssessmentStrata(2014-)NAD83" #No extension
-SSstrat14.shp <- readOGR (".", input)
-names (SSstrat14.shp)
-SSstrat14.df <- fortify (SSstrat14.shp, region = "StrataID")
-SSstrat14.df2 <-SSstrat14.df
-SSstrat14.df2$lat2 <- ifelse (SSstrat14.df2$lat > 44, 44, ifelse (SSstrat14.df2$lat < 40, 40, SSstrat14.df2$lat))
-SSstrat14.df2$long2 <- ifelse (SSstrat14.df2$long > -65, -65, ifelse (SSstrat14.df2$long < -71, -71, SSstrat14.df2$long))
-
-input <- "NAFO_SubUnits_CanAtlantic" #No extension
-NAFO.shp <- readOGR (".", input)
-names (NAFO.shp)
-NAFO.df2 <- fortify (NAFO.shp, region = "UnitArea")
-NAFO.df2$lat2 <- ifelse (NAFO.df2$lat > 44, 44, ifelse (NAFO.df2$lat < 40, 40, NAFO.df2$lat))
-NAFO.df2$long2 <- ifelse (NAFO.df2$long > -65.0, -65.0, ifelse (NAFO.df2$long < -71.0, -71.0, NAFO.df2$long))
-
-input <- "Can-USBorder" #No extension
-Border.shp <- readOGR (".", input)
-names (Border.shp)
-Border.df <- fortify (Border.shp, region = "BoundID")
-Border.df2 <- Border.df [order (Border.df$lat),] 
-Border.df2$lat2 <- ifelse (Border.df2$lat > 44, 44, ifelse (Border.df2$lat < 40, 40, Border.df2$lat))
-Border.df2$long2 <- ifelse (Border.df2$long > -65, -65, ifelse (Border.df2$long < -71, -71, Border.df2$long))
-Border.df3 <- subset(Border.df2, Border.df2[ , 2] > 40.5) 
-Border.df3$long2 <- ifelse (Border.df3$long2 > -66.0, -66.146, Border.df3$long2)
 
 #DFO DISTRIBUTION PIXELATED--------------------------
 
@@ -126,6 +97,22 @@ nmfs <- dbGetQuery(channel, "select a.cruise6 mission, a.est_year year, a.statio
                      and a.station=c.station
                      and a.stratum in ('01130', '01140', '01150', '01160', '01170', '01180', '01190', '01200', '01210')")
 
+nmfs2 <- dbGetQuery(channel, "select a.cruise6 mission, a.est_year year, a.station setno, a.BEGLAT slat, a.BEGLON slong, c.expcatchwt from
+                     usnefsc.uss_station a, usnefsc.uss_mstr_cruise b, usnefsc.uss_catch c
+                     where c.svspp in ('073')
+                     and b.season in ('SPRING')
+                     and b.purpose_code in ('10')
+                     and a.est_year between ('1970') and ('2007')
+                     and a.shg < ('137')
+                     and a.cruise6=b.cruise6
+                     and a.cruise6=c.cruise6
+                     and a.tow=c.tow
+                     and a.station=c.station
+                     and a.stratum in ('01130', '01140', '01150', '01160', '01170', '01180', '01190', '01200', '01210')")
+
+nmfs2$ASW<-NA
+nmfs<-rbind(nmfs2, nmfs)
+
 #Pre-2009 has no ASW value and we just use the raw data without standardization
 
 nmfs$DIST<-nmfs$ASW*(0.539957^2) #Converting the DIST variable for the US data into nautical miles for application
@@ -135,9 +122,14 @@ nmfs$TOTWGT <- (nmfs$EXPCATCHWT*0.007)/nmfs$DIST
 pre2009 <- nmfs %>% filter(YEAR<2009) %>% mutate(TOTWGT=EXPCATCHWT)
 post2009 <- nmfs %>% filter(YEAR>=2009)
 
-
 nmfs <- rbind(pre2009, post2009)
- 
+
+nmfsconv <- read.csv(here("data/nmfsconv.csv"))
+colnames(nmfsconv)[1] <- "YEAR"
+nmfsconv[is.na(nmfsconv)] <- 1
+
+nmfs <- left_join(nmfs,nmfsconv%>%select(-nsprconv)) %>% mutate(TOTWGT=TOTWGT*nfallconv) %>% select(-nfallconv)
+
 sets <- dbGetQuery(channel, "select a.cruise6 mission, a.est_year year, a.station setno, a.beglat slat, a.beglon slong from
                      usnefsc.uss_station a, usnefsc.uss_mstr_cruise b
                      where b.season in ('SPRING')
@@ -207,6 +199,22 @@ nmfs <- dbGetQuery(channel, "select a.cruise6 mission, a.est_year year, a.statio
                      and a.station=c.station
                      and a.stratum in ('01130', '01140', '01150', '01160', '01170', '01180', '01190', '01200', '01210')")
 
+nmfs2 <- dbGetQuery(channel, "select a.cruise6 mission, a.est_year year, a.station setno, a.BEGLAT slat, a.BEGLON slong, c.expcatchwt from
+                     usnefsc.uss_station a, usnefsc.uss_mstr_cruise b, usnefsc.uss_catch c
+                     where c.svspp in ('073')
+                     and b.season in ('FALL')
+                     and b.purpose_code in ('10')
+                     and a.est_year between ('1970') and ('2007')
+                     and a.shg < ('137')
+                     and a.cruise6=b.cruise6
+                     and a.cruise6=c.cruise6
+                     and a.tow=c.tow
+                     and a.station=c.station
+                     and a.stratum in ('01130', '01140', '01150', '01160', '01170', '01180', '01190', '01200', '01210')")
+
+nmfs2$ASW<-NA
+nmfs<-rbind(nmfs2, nmfs)
+
 
 #Pre-2009 has no ASW value and we just use the raw data without standardization
 
@@ -217,8 +225,9 @@ nmfs$TOTWGT <- (nmfs$EXPCATCHWT*0.007)/nmfs$DIST
 pre2009 <- nmfs %>% filter(YEAR<2009) %>% mutate(TOTWGT=EXPCATCHWT)
 post2009 <- nmfs %>% filter(YEAR>=2009)
 
-
 nmfs <- rbind(pre2009, post2009)
+
+nmfs <- left_join(nmfs,nmfsconv%>%select(-nfallconv)) %>% mutate(TOTWGT=TOTWGT*nsprconv) %>% select(-nsprconv)
 
 sets <- dbGetQuery(channel, "select a.cruise6 mission, a.est_year year, a.station setno, a.beglat slat, a.beglon slong from
                      usnefsc.uss_station a, usnefsc.uss_mstr_cruise b
@@ -228,8 +237,6 @@ sets <- dbGetQuery(channel, "select a.cruise6 mission, a.est_year year, a.statio
                      and a.shg < ('137')
                      and a.cruise6=b.cruise6
                      and a.stratum in ('01130', '01140', '01150', '01160', '01170', '01180', '01190', '01200', '01210')")
-
-save(sets,file="nmfsfsets.Rda")
 
 sets$YEAR <- as.numeric(sets$YEAR)
 
