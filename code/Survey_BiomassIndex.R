@@ -124,7 +124,7 @@ ggplot(nmfsonly) +
 
 ggsave(here("figures/Survey_ScaledBiomassIndex_NMFSonly.png"), width=10, height=5, units="in")
 
-#Alternative calculation for NMFS EGB
+##Part 3. Alternative calculation for NMFS EGB
 
 CAA_nmfsspr <- read.csv(here("data/Survey CAA/nmfsspr_survey_caa.csv"))
 CAA_nmfsspr$SURVEY <- "NMFS SPRING"
@@ -143,8 +143,64 @@ WAA <- WAA %>% pivot_longer(!c(Year, SURVEY), names_to="AGE", values_to="WAA") %
 combined <- full_join(CAA, WAA)
 combined$biomass <- combined$CAA*combined$WAA
 
-ready <- combined %>% distinct() %>% select(Year, SURVEY, AGE, biomass) %>% pivot_wider(c(Year,AGE), names_from=SURVEY, values_from=biomass)
-colnames(ready)[3] <- "NMFSSPRING"
-colnames(ready)[4] <- "NMFSFALL"
 
-write.csv(ready, here("data/NMFSEGB_Biomass_calculated.csv"))
+#Part 4. Comparing Nmfs Total BIomass conversion (TRAC-accepted) to Length-Based Convertsion (NAA * WAA, RT Accepted, requested at TRAC):
+conv_comp <- combined
+
+#Splitting up the convoluted names into individual variables
+conv_comp2$Area<-with(conv_comp2, ifelse(grepl("egb",variable),'EGB','GB'))
+conv_comp2$Entity<-with(conv_comp2, ifelse(grepl("dfo",variable),'DFO','NMFS'))
+conv_comp2$Season<-with(conv_comp2, ifelse(grepl("spr",variable),'Spring','Fall'))
+conv_comp2$Season<-with(conv_comp2, ifelse(grepl("dfo",variable), 'Spring', Season))
+conv_comp2$EntSea<-with(conv_comp2, paste(Entity, Season, sep=""))
+conv_comp2$Conv<-with(conv_comp2, ifelse(grepl("len",variable), 'Length', "Total"))
+
+ggplot(subset(conv_comp2, Area=="EGB"&Entity=="NMFS"&value>0&year>1999), aes(year, value, group=variable, col=Conv))+geom_point()+geom_line()+facet_wrap(~Area+EntSea, scale="free_y")+theme_bw()+ expand_limits(y = 0)
+
+ggsave(here("figures/Survey_NMFS_LengthTotalConversionComparison.png"), width=12, height=5, units="in")
+
+#Part 5. Regenerating the biomass comparison plots but now using the length-based conversion biomass:
+surveybiomass4 <- read.csv(here("data/surveybiomass_LengthBasedConversionsNMFS.csv"))
+
+#Standardizing Surveys against their own means:
+surveybiomass4[is.na(surveybiomass4)] <- 0
+nmfsfall_mean <- mean(subset(surveybiomass4, year>1985&nmfsfall.egb.len>0)$nmfsfall.egb.len)
+nmfsspr_mean <- mean(subset(surveybiomass4, year>1985&nmfsspr.egb.len>0)$nmfsspr.egb.len)
+dfospregb_mean <- mean(subset(surveybiomass4, year>1985&dfospr.egb>0)$dfospr.egb)
+dfosprgb_mean <- mean(subset(surveybiomass4, year>1985&dfospr.gb>0)$dfospr.gb)
+
+#These are the standard converted biomass calculations
+surveybiomass4$NMFSFall.EGB <- surveybiomass4$nmfsfall.egb.len/nmfsfall_mean
+surveybiomass4$NMFSSpring.EGB <- surveybiomass4$nmfsspr.egb.len/nmfsspr_mean
+surveybiomass4$DFO.EGB <- surveybiomass4$dfospr.egb/biomass$dfospregb_mean
+surveybiomass4$DFO.GB <- surveybiomass4$dfospr.gb/biomass$dfosprgb_mean
+
+surveybiomass5<-subset(surveybiomass4, select=c('year','NMFSFall.EGB','NMFSSpring.EGB','DFO.EGB','DFO.GB'))
+
+surveybiomass5<-melt(surveybiomass5, id.vars="year")
+surveybiomass5$FACET<-"Total Biomass (std)"
+names(surveybiomass5)<-names(biomass2)
+surveybiomass6<-rbind(surveybiomass5, biomass2)
+
+#Splitting up the convoluted names into individual variables
+surveybiomass6$Area<-with(surveybiomass6, ifelse(grepl("EGB",Survey),'EGB','GB'))
+surveybiomass6$Entity<-with(surveybiomass6, ifelse(grepl("DFO",Survey),'DFO','NMFS'))
+surveybiomass6$Season<-with(surveybiomass6, ifelse(grepl("Spr",Survey),'Spring','Fall'))
+surveybiomass6$Season<-with(surveybiomass6, ifelse(grepl("DFO",Survey), 'Spring', Season))
+surveybiomass6$EntSea<-with(surveybiomass6, paste(Entity, Season, sep=""))
+
+surveybiomass6<-subset(surveybiomass6, biomass>0)
+
+ggplot(surveybiomass6) +
+  geom_line(aes(x=year, y=biomass, group=EntSea, color=EntSea), linetype=2) +
+  geom_point(aes(x=year, y=biomass, group=EntSea, colour = EntSea),size=2) + 
+  theme_bw() +
+  xlab("Year") +
+  ylab("Scaled Biomass Index") +
+  scale_colour_viridis_d(option="turbo", end=0.8)+
+  facet_wrap(~Area, scale="free_y")+ylim(0,7)+
+  geom_vline(xintercept=c(1990, 2010))
+#geom_smooth(aes(x=year, y=biomass, group=EntSea, colour = EntSea), se=FALSE, size=1.2)
+
+ggsave(here("figures/Survey_ScaledBiomassIndex_EGBvGB.png"), width=12, height=5, units="in")
+
