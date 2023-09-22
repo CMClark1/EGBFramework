@@ -5,12 +5,7 @@
 # Author: Caira Clark
 #############################
 
-require(ggplot2)
-require(dplyr)
-require(tidyr)
-require(here)
-require(ggpubr)
-library(viridis)
+require(ggplot2);require(dplyr);require(tidyr);require(here);require(ggpubr);require(viridis)
 
 #Load the fishery CAA file
 CAA_fishery <- read.csv(here("data/Survey CAA/fishery_combined_caa.csv"))
@@ -81,23 +76,8 @@ colnames(CAA_nmfsEGB)[2] <- "Survey"
 
 CAA_nmfsEGB <- CAA_nmfsEGB %>% select(Survey, Year, Age, Abundance)
 
-#NMFS SURVEY GB--------------
-
-gbdata <- read.csv(here("data/NMFS.GB/NumAge_Data.csv"))
-gbdata <- gbdata %>% filter(INDEX_NAME%in%c("NEFSC BTS_GBK_FALL", "NEFSC BTS_GBK_SPRING"))
-
-CAA_nmfs <- gbdata %>% 
-  select(INDEX_NAME, YEAR, Age.0, Age.1, Age.2, Age.3, Age.4, Age.5, Age.6, Age.7, Age.8, Age.9.) %>% 
-  mutate(Age.10=0, Age.11=0, Age.12=0, Age.13=0, Age.14=0, Age.15=0, Age.16=0) %>%
-  pivot_longer(!c(INDEX_NAME, YEAR), names_to="Age", values_to="Abundance") %>% 
-  mutate(INDEX_NAME=case_when(INDEX_NAME=="NEFSC BTS_GBK_FALL" ~ "NMFS FALL GB", 
-                              INDEX_NAME=="NEFSC BTS_GBK_SPRING" ~ "NMFS SPRING GB"))
-CAA_nmfs$Age <- as.double(substr(CAA_nmfs$Age, 5, 5))
-colnames(CAA_nmfs)[1] <- "Survey"
-colnames(CAA_nmfs)[2] <- "Year"
-
 #Join all the survey data together
-CAA_surveys <- rbind(CAA_dfo2, CAA_nmfsEGB, CAA_nmfs)
+CAA_surveys <- rbind(CAA_dfo2, CAA_nmfsEGB)
 
 #Join fishery CAA to survey CAA
 
@@ -118,14 +98,53 @@ CAA_all <- CAA_all %>% mutate(DECADE=case_when(
   Year > 1989 & Year <= 1999 ~ "1990-1999",
   Year > 1999 & Year <= 2009 ~ "2000-2009",
   Year > 2009 & Year <= 2019 ~ "2010-2019",
-  Year > 2019  ~ "2020+"))
+  Year > 2019  ~ "2020+")) %>%
+  filter(!is.na(RelF)) %>%
+  group_by(Survey, DECADE, Age) %>%
+  summarise(meanRelF=mean(RelF))
 
-ggplot(CAA_all) +
-  geom_path(aes(x=Age, y=RelF, colour=Year)) +
-  facet_grid(DECADE~Survey, scales="free_y")+
+relf_dgoegb <- ggplot(CAA_all%>%filter(Survey=="DFO EGB")) +
+  geom_line(aes(x=Age, y=meanRelF)) +
+  facet_grid(DECADE~., scales="free")+
   theme_bw()+
   scale_colour_viridis() +
-  ggtitle("Relative F")
+  ggtitle("DFO EGB")
+
+relf_dfowgb <- ggplot(CAA_all%>%filter(Survey=="DFO WGB")) +
+  geom_line(aes(x=Age, y=meanRelF)) +
+  facet_grid(DECADE~., scales="free")+
+  theme_bw()+
+  scale_colour_viridis() +
+  ggtitle("DFO WGB")
+
+relf_dfogb <- ggplot(CAA_all%>%filter(Survey=="DFO GB")) +
+  geom_line(aes(x=Age, y=meanRelF)) +
+  facet_grid(DECADE~., scales="free")+
+  theme_bw()+
+  scale_colour_viridis() +
+  ggtitle("DFO GB")
+
+relf_nmfsfallegb<- ggplot(CAA_all%>%filter(Survey=="NMFS FALL EGB")) +
+  geom_line(aes(x=Age, y=meanRelF)) +
+  facet_grid(DECADE~., scales="free")+
+  theme_bw()+
+  scale_colour_viridis() +
+  ggtitle("NMFS FALL EGB")
+
+relf_nmfsspregb<- ggplot(CAA_all%>%filter(Survey=="NMFS SPRING EGB")) +
+  geom_line(aes(x=Age, y=meanRelF)) +
+  facet_grid(DECADE~., scales="free")+
+  theme_bw()+
+  scale_colour_viridis() +
+  ggtitle("NMFS SPRING EGB")
+
+relF <- ggarrange(relf_dgoegb + rremove("ylab") + rremove("xlab"), relf_dfowgb + rremove("ylab") + rremove("xlab"), relf_dfogb + rremove("ylab") + rremove("xlab"), relf_nmfsspregb + rremove("ylab") + rremove("xlab"), relf_nmfsfallegb + rremove("ylab") + rremove("xlab"), nrow=1, ncol=5, common.legend = TRUE, legend="right")
+
+require(grid)
+annotate_figure(relF, left = textGrob("RelF", rot = 90, vjust = 1, gp = gpar(cex = 1.3)),
+                bottom = textGrob("Year", gp = gpar(cex = 1.3)))
+
+ggsave(here("figures/Survey_RelativeF.png"), width=10, height=8, units="in")
 
 
 #Calculate selectivity
@@ -143,11 +162,16 @@ CAA_surveys2 <- CAA_surveys2 %>% mutate(DECADE=case_when(
   Year > 1989 & Year <= 1999 ~ "1990-1999",
   Year > 1999 & Year <= 2009 ~ "2000-2009",
   Year > 2009 & Year <= 2019 ~ "2010-2019",
-  Year > 2019  ~ "2020+"))
+  Year > 2019  ~ "2020+")) %>%
+  filter(!is.na(Selectivity)) %>%
+  group_by(Survey, DECADE, Age) %>%
+  summarise(meanSelect=mean(Selectivity))
 
 ggplot(CAA_surveys2) +
-  geom_line(aes(x=Age, y=Selectivity, colour=Year, group=Year)) +
+  #geom_smooth(aes(x=Age, y=Selectivity, colour=Year, group=DECADE)) +
+  geom_line(aes(x=Age, y=meanSelect)) +
   facet_grid(DECADE~Survey, scales="free_y")+
   theme_bw()+
-  scale_colour_viridis() +
-  ggtitle("Survey Selectivity")
+  scale_colour_viridis()
+
+ggsave(here("figures/Survey_Selectivity.png"), width=10, height=8, units="in")
