@@ -198,6 +198,8 @@ ggplot(subset(samples, YEAR>2009 & SPEC=="COD" & grepl("5Z", UNIT)), aes(PartAge
   theme(legend.title = element_blank())+
   ggtitle("5Z Cod >2009 All Data")
 
+ggsave(here("figures/Survey_Growth_PartialAge_5ZCod_alldata.png"), width=10, height=8, units="in")
+
 #5Z Cod >2009 Survey Data
 ggplot(subset(samples, YEAR>2009 & SPEC=="COD" & DESCRIPTION%in%c("PORT SAMPLE", "OBSERVER SAMPLE") & grepl("5Z", UNIT)), aes(PartAge, FLEN))+
   geom_point(aes(col=YEARS),alpha=0.5)+
@@ -211,6 +213,8 @@ ggplot(subset(samples, YEAR>2009 & SPEC=="COD" & DESCRIPTION%in%c("PORT SAMPLE",
   xlab("Partial age")+
   theme(legend.title = element_blank())+
   ggtitle("5Z Cod >2009 Survey Data")
+
+ggsave(here("figures/Survey_Growth_PartialAge_5ZCod_surveyonly.png"), width=10, height=8, units="in")
 
 #5Z Faceted by Data Source
 ggplot(samples%>%filter(YEAR>2009 & grepl("5Z", UNIT) & SPEC=="COD"), aes(PartAge, FLEN))+
@@ -227,6 +231,8 @@ ggplot(samples%>%filter(YEAR>2009 & grepl("5Z", UNIT) & SPEC=="COD"), aes(PartAg
   theme(legend.title = element_blank())+
   ggtitle("5Z Cod >2009 All Data")
 
+ggsave(here("figures/Survey_Growth_PartialAge_5ZCod_facetdatasource.png"), width=10, height=8, units="in")
+
 #5Z Cod, Haddock, Pollock >2009
 ggplot(subset(samples, YEAR>2009 & grepl("5Z", UNIT)), aes(PartAge, FLEN))+
   geom_point(aes(col=YEARS),alpha=0.5)+
@@ -241,6 +247,8 @@ ggplot(subset(samples, YEAR>2009 & grepl("5Z", UNIT)), aes(PartAge, FLEN))+
   facet_grid(~SPEC) +
   theme(legend.title = element_blank())+
   ggtitle("5Z Cod, Haddock, Pollock >2009 All Data")
+
+ggsave(here("figures/Survey_Growth_PartialAge_5ZCod_groundfishcomp.png"), width=10, height=8, units="in")
 
 #4X Cod >2009
 ggplot(samples%>%filter(YEAR>2009 & grepl("4X", UNIT) & SPEC=="COD"), aes(PartAge, FLEN))+
@@ -257,6 +265,8 @@ ggplot(samples%>%filter(YEAR>2009 & grepl("4X", UNIT) & SPEC=="COD"), aes(PartAg
   theme(legend.title = element_blank())+
   ggtitle("4X Cod >2009 All Data")
 
+ggsave(here("figures/Survey_Growth_PartialAge_4Xcod_alldata.png"), width=10, height=8, units="in")
+
 #4Xpqrs (BOF) faceted by data source
 ggplot(samples%>%filter(YEAR>2009 & UNIT%in%c("4XP","4XQ","4XR","4XS") & SPEC=="COD"), aes(PartAge, FLEN))+
   geom_point(aes(col=YEARS),alpha=0.5)+
@@ -272,6 +282,8 @@ ggplot(samples%>%filter(YEAR>2009 & UNIT%in%c("4XP","4XQ","4XR","4XS") & SPEC=="
   theme(legend.title = element_blank())+
   ggtitle("4X Cod >2009 All Data")
 
+ggsave(here("figures/Survey_Growth_PartialAge_4Xpqrs_facetdatasource.png"), width=10, height=8, units="in")
+
 #4W Cod >2009
 ggplot(samples%>%filter(YEAR>2009 & grepl("4W", UNIT) & SPEC=="COD"), aes(PartAge, FLEN))+
   geom_point(aes(col=YEARS),alpha=0.5)+
@@ -286,6 +298,8 @@ ggplot(samples%>%filter(YEAR>2009 & grepl("4W", UNIT) & SPEC=="COD"), aes(PartAg
   facet_wrap(~UNIT) +
   theme(legend.title = element_blank())+
   ggtitle("4W Cod >2009 All Data")
+
+ggsave(here("figures/Survey_Growth_PartialAge_4Wcod_alldata.png"), width=10, height=8, units="in")
 
 
 #Overlays
@@ -333,7 +347,7 @@ plot3 <- ggarrange(plot1, plot2, ncol=2, nrow=1, common.legend = TRUE, legend = 
 annotate_figure(plot3, top = text_grob("Partial Ages for 5Z and 4Xpqrs Cod", 
                                       color = "black", face = "bold", size = 14))
 
-ggsave(here("figures/PartialAge5Z4Xpqrs.png"), width=15, height=10, units="in")
+ggsave(here("figures/Survey_Growth_PartialAge5Z4Xpqrs.png"), width=15, height=10, units="in")
 
 #Trendline plots
 
@@ -357,6 +371,9 @@ plot4 <- ggplot(data=subset(samples4, PartAge<13))+
   guides(col = guide_legend(title = "AREA")) +
   theme_bw() +
   scale_colour_viridis_d()
+plot4
+
+ggsave(here("figures/Survey_Growth_Smooth_BOFvSSv5Z.png"), width=10, height=8, units="in")
 
 samples5 <- samples %>% filter((grepl("4X", UNIT)) | (grepl("5Z", UNIT))) %>% 
   filter(!UNIT%in%c("4XM", "4XN","4XO") & DESCRIPTION%in%c("DFO SUMMER", "DFO SPRING")) %>%
@@ -380,6 +397,10 @@ plot5 <- ggplot(data=subset(samples5, PartAge<13))+
     guides(col = guide_legend(title = "UNIT")) +
     theme_bw() +
     scale_colour_viridis_d()
+plot5
+
+ggsave(here("figures/Survey_Growth_Smooth_4Xpqrs5Z.png"), width=10, height=8, units="in")
+
 
 #Look at 5Z at a finer scale - j vs m vs n etc.
 
@@ -418,3 +439,6 @@ plot6 <- ggplot(data=subset(samples6, PartAge<13))+
   guides(col = guide_legend(title = "STRATA")) +
   theme_bw() +
   scale_colour_viridis_d(option="turbo")
+plot6
+
+ggsave(here("figures/Survey_Growth_Smooth_5Z19.png"), width=10, height=8, units="in")
