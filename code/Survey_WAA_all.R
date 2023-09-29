@@ -97,8 +97,8 @@ nmfsfall_waa_egb <- ggplot(subset(WAA_nmfsfall2, Age %in% c(2:7)), aes(Year, Wei
   ggtitle("NMFS Fall Weight at Age")
 nmfsfall_waa_egb
 
-ggarrange(WAAplot, nmfsspring_waa_egb, nmfsspring_waa_egb, ncol=1, nrow=3)
-
+ggarrange(WAAplot, nmfsspring_waa_egb, nmfsfall_waa_egb, ncol=1, nrow=3)
+ggsave(here("figures/Survey_WAA.png"), width=15, height=12, units="in")
 
 #Plot all together
 
@@ -118,6 +118,6 @@ ggplot(subset(allsurveys, Age %in% c(2:7)), aes(YEAR, Weight, colour=SURVEY)) +
   ylab("Weight (kg)")+
   theme_bw()+
   ggtitle("Weight at Age")
+ggsave(here("figures/Survey_WAA_all.png"), width=15, height=12, units="in")
 
-ggsave(here("figures/Survey_WAA.png"), width=15, height=12, units="in")
 

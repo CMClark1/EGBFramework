@@ -170,7 +170,7 @@ CAA_surveys2 <- CAA_surveys2 %>% mutate(DECADE=case_when(
 ggplot(CAA_surveys2) +
   #geom_smooth(aes(x=Age, y=Selectivity, colour=Year, group=DECADE)) +
   geom_line(aes(x=Age, y=meanSelect)) +
-  facet_grid(DECADE~Survey, scales="free_y")+
+  facet_grid(DECADE~factor(Survey, levels=c('DFO EGB','DFO GB','DFO WGB','NMFS SPRING EGB','NMFS FALL EGB')), scales="free_y")+
   theme_bw()+
   scale_colour_viridis()
 

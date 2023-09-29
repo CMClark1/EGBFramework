@@ -183,7 +183,8 @@ logscale <- ggplot() +
   facet_grid(~ID) +
   xlab("log(Length)") +
   ylab("log(Weight)") +
-  theme_bw()
+  theme_bw() +
+  facet_grid(factor(ID, levels=c('DFO', 'NMFSSPRING','NMFSFALL'))~.)
 logscale
 
 #Graph with data points
@@ -202,7 +203,8 @@ regscale <- ggplot() +
   facet_grid(~ID) +
   xlab("Length (cm)") +
   ylab("Weight(g)") +
-  theme_bw()
+  theme_bw() +
+  facet_grid(factor(ID, levels=c('DFO', 'NMFSSPRING','NMFSFALL'))~.)
 regscale
 
 ggarrange(regscale, logscale, ncol=1, nrow=2)

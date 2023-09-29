@@ -208,9 +208,9 @@ nmfsspring <- ggarrange(snmfs_fulton, snmfs_lecren, nrow=2, ncol=1, legend = "bo
 
 #All plots combined
 
-ggarrange(dfo, nmfsfall, nmfsspring, ncol=3, nrow=1)
+ggarrange(dfo, nmfsspring, nmfsfall, ncol=3, nrow=1)
 
-ggsave(here("figures/Survey_Condition.png"), width=15, height=10, units="in")
+#ggsave(here("figures/Survey_Condition.png"), width=15, height=10, units="in")
 
 #Data from all surveys combined in one plot
 
@@ -219,7 +219,7 @@ fNMFS$SURVEY <- "NMFS Fall"
 sNMFS$SURVEY <- "NMFS Spring"
 
 allsurveys <- rbind(sprDFO, fNMFS, sNMFS)
-allsurveys <- allsurveys %>% select(YEAR, SEX, FultonK, LeCren, SURVEY) %>% pivot_longer(!c(YEAR, SEX, SURVEY), names_to="MEASURE", values_to = "VALUE")
+allsurveys <- allsurveys %>% select(YEAR, SEX, FultonK, LeCren, SURVEY) %>% tidyr::pivot_longer(!c(YEAR, SEX, SURVEY), names_to="MEASURE", values_to = "VALUE")
 allsurveys$IDENTIFIER <- paste(allsurveys$SEX, allsurveys$MEASURE, sep="-")
 
 allsurveys <- allsurveys %>% mutate(MEAN=case_when(SURVEY=="DFO" & MEASURE=="FultonK" ~ mean(sprDFO$avgFultK),
@@ -239,7 +239,8 @@ ggplot(allsurveys, aes(YEAR, VALUE, col=IDENTIFIER)) +
   theme_bw() + 
   geom_line(aes(YEAR,MEAN, group=MEASURE, linetype=MEASURE), size=1,col='black') +
   ggtitle("Condition")+
-  ylim(0.8, 1.2)
+  ylim(0.8, 1.2) +
+  facet_grid(factor(SURVEY, levels=c('DFO', 'NMFS Spring','NMFS Fall'))~.)
 
 ggsave(here("figures/Survey_Condition.png"), width=10, height=7, units="in")
 
