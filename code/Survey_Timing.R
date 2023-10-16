@@ -116,6 +116,10 @@ minmax <- dates %>% group_by(YEAR) %>%
   dplyr::summarize(start = yday(min(SDATE)), end = yday(max(SDATE))) %>%
   gather(key=date_type, value=date, -YEAR) %>%
   distinct()
+
+a2020 <- data.frame(YEAR=c(2020,2020), date_type=c("start","end"), date=c(70,70))
+minmax<- rbind(minmax, a2020)
+minmax <- minmax %>% arrange(YEAR)
 minmax$YEAR <- as.factor(minmax$YEAR)
 
 plot2 <- ggplot() +
@@ -165,6 +169,10 @@ minmax <- dates %>% group_by(YEAR) %>%
   dplyr::summarize(start = yday(min(SDATE)), end = yday(max(SDATE))) %>%
   gather(key=date_type, value=date, -YEAR) %>%
   distinct()
+
+a2020 <- data.frame(YEAR=c(2020,2020), date_type=c("start","end"), date=c(300,300))
+minmax<- rbind(minmax, a2020)
+minmax <- minmax %>% arrange(YEAR)
 minmax$YEAR <- as.factor(minmax$YEAR)
 
 plot3 <- ggplot() +
