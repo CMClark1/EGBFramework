@@ -50,10 +50,10 @@ mLC <- mean(ps$LeCren) #This is the avgLeCren value
 sprDFO <- ddply(springDFO,. (YEAR, FSEX), summarize, FultonK=mean(FULTK), fSD=sd(FULTK), fCV=(sd(FULTK)/mean(FULTK)*100), LeCren=mean(LECREN), lSD=sd(LECREN), lCV=(sd(LECREN)/mean(LECREN)*100), avgFultK=mFK, avgLeCren=mLC)
 sprDFO$SEX <- with(sprDFO, ifelse(FSEX==1,'Male','Female'))
 
-dfo_fulton <- ggplot(sprDFO, aes(YEAR, FultonK, col=SEX)) + 
+dfo_fulton <- ggplot(sprDFO, aes(YEAR, FultonK, col=SEX)) +
   geom_point(size=2) + 
   geom_line(size=1) + 
-  #geom_errorbar(aes(ymin=FultonK-fSD, ymax=FultonK+fSD), width=.2, position=position_dodge(.9)) +
+  geom_errorbar(aes(ymin=FultonK-fSD, ymax=FultonK+fSD), width=.2, position=position_dodge(.9)) +
   #facet_wrap(~source, ncol=1)+ 
   scale_color_manual(values = c('red','blue')) + 
   theme_bw() + 
@@ -64,7 +64,7 @@ dfo_fulton <- ggplot(sprDFO, aes(YEAR, FultonK, col=SEX)) +
 dfo_lecren <- ggplot(sprDFO, aes(YEAR, LeCren, col=SEX)) + 
   geom_point(size=2) + 
   geom_line(size=1) + 
-  #geom_errorbar(aes(ymin=LeCren-lSD, ymax=LeCren+lSD), width=.2, position=position_dodge(.9)) +
+  geom_errorbar(aes(ymin=LeCren-lSD, ymax=LeCren+lSD), width=.2, position=position_dodge(.9)) +
   #facet_wrap(~source, ncol=1)+ 
   scale_color_manual(values = c('red','blue')) + 
   theme_bw() + 
@@ -121,7 +121,7 @@ fNMFS$YEAR <- as.numeric(fNMFS$YEAR)
 fnmfs_fulton <- ggplot(fNMFS, aes(YEAR, FultonK, col=SEX)) + 
   geom_point(size=2) + 
   geom_line(size=1) + 
-  #geom_errorbar(aes(ymin=FultonK-fSD, ymax=FultonK+fSD), width=.2, position=position_dodge(.9)) +
+  geom_errorbar(aes(ymin=FultonK-fSD, ymax=FultonK+fSD), width=.2, position=position_dodge(.9)) +
   #facet_wrap(~source, ncol=1)+ 
   scale_color_manual(values = c('red','blue')) + 
   theme_bw() + 
@@ -132,7 +132,7 @@ fnmfs_fulton <- ggplot(fNMFS, aes(YEAR, FultonK, col=SEX)) +
 fnmfs_lecren <- ggplot(fNMFS, aes(YEAR, LeCren, col=SEX)) + 
   geom_point(size=2) + 
   geom_line(size=1) + 
-  #geom_errorbar(aes(ymin=LeCren-lSD, ymax=LeCren+lSD), width=.2, position=position_dodge(.9)) +
+  geom_errorbar(aes(ymin=LeCren-lSD, ymax=LeCren+lSD), width=.2, position=position_dodge(.9)) +
   #facet_wrap(~source, ncol=1)+ 
   scale_color_manual(values = c('red','blue')) + 
   theme_bw() + 
@@ -185,7 +185,7 @@ sNMFS$YEAR <- as.numeric(sNMFS$YEAR)
 snmfs_fulton <- ggplot(sNMFS, aes(YEAR, FultonK, col=SEX)) + 
   geom_point(size=2) + 
   geom_line(size=1) + 
-  #geom_errorbar(aes(ymin=FultonK-fSD, ymax=FultonK+fSD), width=.2, position=position_dodge(.9)) +
+  geom_errorbar(aes(ymin=FultonK-fSD, ymax=FultonK+fSD), width=.2, position=position_dodge(.9)) +
   #facet_wrap(~source, ncol=1)+ 
   scale_color_manual(values = c('red','blue')) + 
   theme_bw() + 
@@ -196,7 +196,7 @@ snmfs_fulton <- ggplot(sNMFS, aes(YEAR, FultonK, col=SEX)) +
 snmfs_lecren <- ggplot(sNMFS, aes(YEAR, LeCren, col=SEX)) + 
   geom_point(size=2) + 
   geom_line(size=1) + 
-  #geom_errorbar(aes(ymin=LeCren-lSD, ymax=LeCren+lSD), width=.2, position=position_dodge(.9)) +
+  geom_errorbar(aes(ymin=LeCren-lSD, ymax=LeCren+lSD), width=.2, position=position_dodge(.9)) +
   #facet_wrap(~source, ncol=1)+ 
   scale_color_manual(values = c('red','blue')) + 
   theme_bw() + 
@@ -210,7 +210,7 @@ nmfsspring <- ggarrange(snmfs_fulton, snmfs_lecren, nrow=2, ncol=1, legend = "bo
 
 ggarrange(dfo, nmfsspring, nmfsfall, ncol=3, nrow=1)
 
-#ggsave(here("figures/Survey_Condition.png"), width=15, height=10, units="in")
+ggsave(here("figures/Survey_Condition.png"), width=15, height=10, units="in")
 
 #Data from all surveys combined in one plot
 
@@ -219,7 +219,18 @@ fNMFS$SURVEY <- "NMFS Fall"
 sNMFS$SURVEY <- "NMFS Spring"
 
 allsurveys <- rbind(sprDFO, fNMFS, sNMFS)
-allsurveys <- allsurveys %>% select(YEAR, SEX, FultonK, LeCren, SURVEY) %>% tidyr::pivot_longer(!c(YEAR, SEX, SURVEY), names_to="MEASURE", values_to = "VALUE")
+allFultonK <- allsurveys %>% select(YEAR, SEX, FultonK, SURVEY) %>% tidyr::pivot_longer(!c(YEAR, SEX, SURVEY), names_to="MEASURE", values_to = "VALUE")
+allfSD <- allsurveys %>% select(YEAR, SEX, fSD, SURVEY) %>% tidyr::pivot_longer(!c(YEAR, SEX, SURVEY), names_to="MEASURE", values_to = "VALUE")
+colnames(allfSD)[5] <- "SD"
+Fready<-left_join(allFultonK, allfSD%>%select(-MEASURE))
+
+allLeCren <- allsurveys %>% select(YEAR, SEX, LeCren, SURVEY) %>% tidyr::pivot_longer(!c(YEAR, SEX, SURVEY), names_to="MEASURE", values_to = "VALUE")
+alllSD <- allsurveys %>% select(YEAR, SEX, lSD, SURVEY) %>% tidyr::pivot_longer(!c(YEAR, SEX, SURVEY), names_to="MEASURE", values_to = "VALUE")
+colnames(alllSD)[5] <- "SD"
+Lready <- left_join(allLeCren, alllSD%>%select(-MEASURE))
+
+allsurveys <- rbind(Fready, Lready)
+
 allsurveys$IDENTIFIER <- paste(allsurveys$SEX, allsurveys$MEASURE, sep="-")
 
 allsurveys <- allsurveys %>% mutate(MEAN=case_when(SURVEY=="DFO" & MEASURE=="FultonK" ~ mean(sprDFO$avgFultK),
@@ -229,11 +240,10 @@ allsurveys <- allsurveys %>% mutate(MEAN=case_when(SURVEY=="DFO" & MEASURE=="Ful
                                      SURVEY=="NMFS Fall" & MEASURE=="FultonK" ~ mean(fNMFS$avgFultK),
                                      SURVEY=="NMFS Fall" & MEASURE=="LeCren" ~ mean(fNMFS$avgLeCren)))
 
-
 ggplot(allsurveys, aes(YEAR, VALUE, col=IDENTIFIER)) + 
   geom_point(size=2) + 
   geom_line(size=1) + 
-  #geom_errorbar(aes(ymin=FultonK-fSD, ymax=FultonK+fSD), width=.2, position=position_dodge(.9)) +
+  geom_errorbar(aes(ymin=VALUE-SD, ymax=VALUE+SD), width=.2, position=position_dodge(.9)) +
   facet_wrap(~SURVEY, ncol=1, scales="free")+ 
   scale_color_viridis_d(option="turbo", end=0.8)+
   theme_bw() + 
@@ -242,5 +252,5 @@ ggplot(allsurveys, aes(YEAR, VALUE, col=IDENTIFIER)) +
   ylim(0.8, 1.2) +
   facet_grid(factor(SURVEY, levels=c('DFO', 'NMFS Spring','NMFS Fall'))~.)
 
-ggsave(here("figures/Survey_Condition.png"), width=10, height=7, units="in")
+#ggsave(here("figures/Survey_Condition.png"), width=10, height=7, units="in")
 
